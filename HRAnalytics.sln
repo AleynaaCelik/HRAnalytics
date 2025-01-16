@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35527.113 d17.12
+VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HRAnalytics.Core", "HRAnalytics.Core\HRAnalytics.Core.csproj", "{7A1D3D39-407F-44DB-825A-5A50651EEB1F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HRAnalytics.Infrastructure", "HRAnalytics.Infrastructure\HRAnalytics.Infrastructure.csproj", "{52F83B72-EB57-46EA-9D77-5088399632E9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{7A1D3D39-407F-44DB-825A-5A50651EEB1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7A1D3D39-407F-44DB-825A-5A50651EEB1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7A1D3D39-407F-44DB-825A-5A50651EEB1F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52F83B72-EB57-46EA-9D77-5088399632E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52F83B72-EB57-46EA-9D77-5088399632E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52F83B72-EB57-46EA-9D77-5088399632E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52F83B72-EB57-46EA-9D77-5088399632E9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
