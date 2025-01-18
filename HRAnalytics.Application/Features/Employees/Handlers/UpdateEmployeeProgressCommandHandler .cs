@@ -2,7 +2,6 @@
 using HRAnalytics.Application.Common;
 using HRAnalytics.Application.DTOs.Progress;
 using HRAnalytics.Application.Features.Employees.Commands;
-using HRAnalytics.Core.Entities.Enums;
 using HRAnalytics.Core.Entities;
 using HRAnalytics.Core.Interfaces;
 using MediatR;
@@ -11,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using HRAnalytics.Core.Enums;
 
 namespace HRAnalytics.Application.Features.Employees.Handlers
 {

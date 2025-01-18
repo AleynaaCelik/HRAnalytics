@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using HRAnalytics.Application.DTOs;
 using HRAnalytics.Application.DTOs.Employee;
 using HRAnalytics.Application.DTOs.Progress;
 using HRAnalytics.Core.Entities;
