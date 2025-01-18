@@ -13,13 +13,24 @@ namespace HRAnalytics.Infrastructure.Repositories
     {
         private readonly ApplicationDbContext _context;
         private IDbContextTransaction? _transaction;
+        private readonly Dictionary<Type, object> _repositories;
         private bool disposed = false;
 
         public UnitOfWork(ApplicationDbContext context)
         {
             _context = context;
+            _repositories = new Dictionary<Type, object>();
         }
 
+        public IRepository<T> Repository<T>() where T : class
+        {
+            var type = typeof(T);
+            if (!_repositories.ContainsKey(type))
+            {
+                _repositories[type] = new GenericRepository<T>(_context);
+            }
+            return (IRepository<T>)_repositories[type];
+        }
         public async Task BeginTransactionAsync()
         {
             _transaction = await _context.Database.BeginTransactionAsync();

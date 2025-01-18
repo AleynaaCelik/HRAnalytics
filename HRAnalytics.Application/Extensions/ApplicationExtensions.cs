@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using HRAnalytics.Application.Mappings;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -13,10 +14,10 @@ namespace HRAnalytics.Application.Extensions
     {
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
-            services.AddAutoMapper(Assembly.GetExecutingAssembly());
-            services.AddMediatR(cfg => {
-                cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
-            });
+            // ApplicationExtensions.cs'de güncellenecek
+            services.AddAutoMapper(typeof(MappingProfile));
+
+            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ApplicationExtensions).Assembly));
 
             return services;
         }
