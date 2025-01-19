@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using HRAnalytics.API.Middleware;
+using Microsoft.Extensions.DependencyInjection;
 using HRAnalytics.Application;
 using HRAnalytics.Infrastructure;
-using HRAnalytics.Infrastructure.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +14,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "HR Analytics API",
         Version = "v1",
@@ -51,29 +51,14 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// Global error handling middleware
 app.UseErrorHandling();
-
 app.UseHttpsRedirection();
-
-// Use CORS
 app.UseCors("AllowAll");
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 try
 {
-    // Ensure database is created and migrations are applied
-    using (var scope = app.Services.CreateScope())
-    {
-        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        if (context.Database.IsSqlServer())
-        {
-            context.Database.Migrate();
-        }
-    }
     app.Run();
 }
 catch (Exception ex)

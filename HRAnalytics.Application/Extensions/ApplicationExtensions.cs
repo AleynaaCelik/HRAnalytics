@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace HRAnalytics.Application.Extensions
 {
-    public static class ApplicationExtensions
+    public static class ServiceCollectionExtensions
     {
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
