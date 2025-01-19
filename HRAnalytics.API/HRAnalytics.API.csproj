@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\HRAnalytics.Application\HRAnalytics.Application.csproj" />
+    <ProjectReference Include="..\HRAnalytics.Infrastructure\HRAnalytics.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
