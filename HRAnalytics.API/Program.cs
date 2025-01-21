@@ -1,9 +1,7 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
 using HRAnalytics.API.Middleware;
-using Microsoft.Extensions.DependencyInjection;
-using HRAnalytics.Application;
-using HRAnalytics.Infrastructure;
+using HRAnalytics.Application.Extensions;
+using HRAnalytics.Infrastructure.Extension;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +23,8 @@ builder.Services.AddSwaggerGen(c =>
 // Add Application & Infrastructure Layer Services
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
+
+// ... geri kalan kod ayný ...
 
 // Add CORS
 builder.Services.AddCors(options =>
