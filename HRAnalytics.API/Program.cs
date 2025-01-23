@@ -1,12 +1,43 @@
 using HRAnalytics.API.Middleware;
 using HRAnalytics.Application.Extensions;
+using HRAnalytics.Application.Settings;
 using HRAnalytics.Infrastructure.Extension;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+// Add Application & Infrastructure Layer Services
+builder.Services.AddApplicationServices();
+builder.Services.AddInfrastructureServices(builder.Configuration);
+
+// Add JWT Settings
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings.Issuer,
+        ValidAudience = jwtSettings.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
+    };
+});
 
 // Learn more about configuring Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
@@ -19,12 +50,6 @@ builder.Services.AddSwaggerGen(c =>
         Description = "HR Analytics için RESTful API servisleri"
     });
 });
-
-// Add Application & Infrastructure Layer Services
-builder.Services.AddApplicationServices();
-builder.Services.AddInfrastructureServices(builder.Configuration);
-
-// ... geri kalan kod ayný ...
 
 // Add CORS
 builder.Services.AddCors(options =>
@@ -54,7 +79,11 @@ if (app.Environment.IsDevelopment())
 app.UseErrorHandling();
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
+
+// Add Authentication Middleware
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
 try
