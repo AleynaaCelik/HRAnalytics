@@ -1,4 +1,6 @@
+using FluentValidation;
 using HRAnalytics.API.Middleware;
+using HRAnalytics.API.Validators;
 using HRAnalytics.Application.Extensions;
 using HRAnalytics.Application.Settings;
 using HRAnalytics.Infrastructure.Extension;
@@ -18,6 +20,9 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 
 // Add JWT Settings
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<AuthLoginRequestValidator>();
 
 builder.Services.AddAuthentication(options =>
 {
