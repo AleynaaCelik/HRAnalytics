@@ -1,4 +1,5 @@
 using FluentValidation;
+using FluentValidation.AspNetCore;
 using HRAnalytics.API.Middleware;
 using HRAnalytics.API.Validators;
 using HRAnalytics.Application.Extensions;
@@ -11,18 +12,22 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Add services
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
 
-// Add Application & Infrastructure Layer Services
+// Layer Services
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
-// Add JWT Settings
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+// FluentValidation
+builder.Services.AddFluentValidationAutoValidation()
+   .AddFluentValidationClientsideAdapters()
+   .AddValidatorsFromAssemblyContaining<AuthLoginRequestValidator>();
 
-builder.Services.AddFluentValidationAutoValidation();
-builder.Services.AddValidatorsFromAssemblyContaining<AuthLoginRequestValidator>();
+// JWT Configuration
+var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 
 builder.Services.AddAuthentication(options =>
 {
@@ -31,7 +36,6 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -44,8 +48,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Learn more about configuring Swagger/OpenAPI
-builder.Services.AddEndpointsApiExplorer();
+// Swagger
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
@@ -54,41 +57,56 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1",
         Description = "HR Analytics için RESTful API servisleri"
     });
+
+    // JWT için Authorization butonu
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+   {
+       {
+           new OpenApiSecurityScheme
+           {
+               Reference = new OpenApiReference
+               {
+                   Type = ReferenceType.SecurityScheme,
+                   Id = "Bearer"
+               }
+           },
+           Array.Empty<string>()
+       }
+   });
 });
 
-// Add CORS
+// CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
-        builder =>
-        {
-            builder
-                .AllowAnyOrigin()
-                .AllowAnyMethod()
-                .AllowAnyHeader();
-        });
+    options.AddPolicy("AllowAll", builder =>
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader());
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Middleware Pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "HR Analytics API V1");
-    });
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "HR Analytics API V1"));
 }
 
-app.UseErrorHandling();
+app.UseGlobalExceptionHandler();
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
-
-// Add Authentication Middleware
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 try
@@ -97,8 +115,7 @@ try
 }
 catch (Exception ex)
 {
-    var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
-    var logger = loggerFactory.CreateLogger<Program>();
-    logger.LogError(ex, "Uygulama baþlatýlýrken bir hata oluþtu.");
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "Application startup failed");
     throw;
 }
