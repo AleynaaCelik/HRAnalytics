@@ -24,7 +24,7 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// Existing services configuration
+// Add services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddApplicationServices();
@@ -32,12 +32,13 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 
 // FluentValidation
 builder.Services.AddFluentValidationAutoValidation()
-  .AddFluentValidationClientsideAdapters()
-  .AddValidatorsFromAssemblyContaining<AuthLoginRequestValidator>();
+   .AddFluentValidationClientsideAdapters()
+   .AddValidatorsFromAssemblyContaining<AuthLoginRequestValidator>();
 
 // JWT Configuration
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -57,15 +58,55 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Swagger configuration remains the same...
+// Swagger
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "HR Analytics API",
+        Version = "v1",
+        Description = "HR Analytics için RESTful API servisleri"
+    });
 
-// CORS configuration remains the same...
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+   {
+       {
+           new OpenApiSecurityScheme
+           {
+               Reference = new OpenApiReference
+               {
+                   Type = ReferenceType.SecurityScheme,
+                   Id = "Bearer"
+               }
+           },
+           Array.Empty<string>()
+       }
+   });
+});
+
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader());
+});
 
 var app = builder.Build();
 
-// Exception handling and request logging
+// Middleware Pipeline - Order is important
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 app.UseSerilogRequestLogging();
-app.UseGlobalExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {
