@@ -21,6 +21,9 @@ namespace HRAnalytics.Infrastructure.Context
         public DbSet<EmployeeProgress> EmployeeProgresses { get; set; }
         public DbSet<LearningModule> LearningModules { get; set; }
 
+        public DbSet<User> Users { get; set; } // Eğer eksikse ekle
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

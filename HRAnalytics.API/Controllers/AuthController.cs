@@ -17,12 +17,13 @@ namespace HRAnalytics.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
-        private readonly IRepository<User> _userRepository;
+        private readonly IUserRepository _userRepository;
+
         private readonly IUnitOfWork _unitOfWork;
 
         public AuthController(
             IAuthService authService,
-            IRepository<User> userRepository,
+            IUserRepository userRepository,
             IUnitOfWork unitOfWork)
         {
             _authService = authService;

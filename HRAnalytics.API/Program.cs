@@ -4,7 +4,10 @@ using HRAnalytics.API.Middleware;
 using HRAnalytics.API.Validators;
 using HRAnalytics.Application.Extensions;
 using HRAnalytics.Application.Settings;
+using HRAnalytics.Core.Entities;
+using HRAnalytics.Core.Interfaces;
 using HRAnalytics.Infrastructure.Extension;
+using HRAnalytics.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -29,6 +32,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+
+
+
 
 // FluentValidation
 builder.Services.AddFluentValidationAutoValidation()
