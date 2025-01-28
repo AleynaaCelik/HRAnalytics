@@ -12,7 +12,12 @@ namespace HRAnalytics.Infrastructure.Repositories
 {
     public class UserRepository : GenericRepository<User>, IUserRepository
     {
-        public UserRepository(ApplicationDbContext context) : base(context) { }
+        private readonly ApplicationDbContext _context;
+
+        public UserRepository(ApplicationDbContext context) : base(context)
+        {
+            _context = context;
+        }
 
         public async Task<User> GetUserByUsernameAsync(string username)
         {
