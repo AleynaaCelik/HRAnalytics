@@ -12,40 +12,46 @@ namespace HRAnalytics.Infrastructure.Repositories
     public class GenericRepository<T> : IRepository<T> where T : class
     {
         protected readonly ApplicationDbContext _context;
-        protected readonly DbSet<T> _dbSet;
+        private readonly DbSet<T> _dbSet;
 
         public GenericRepository(ApplicationDbContext context)
         {
             _context = context;
-            _dbSet = context.Set<T>();
+            _dbSet = _context.Set<T>();
         }
 
-        public virtual async Task<T?> GetByIdAsync(int id)
+        public async Task<T> AddAsync(T entity)
         {
-            return await _dbSet.FindAsync(id);
+            await _dbSet.AddAsync(entity);
+            await _context.SaveChangesAsync();
+            return entity;
         }
 
-        public virtual async Task<IReadOnlyList<T>> GetAllAsync()
+        public async Task<IReadOnlyList<T>> GetAllAsync()
         {
             return await _dbSet.ToListAsync();
         }
 
-        public virtual async Task<T> AddAsync(T entity)
+        public async Task<T?> GetByIdAsync(int id)
         {
-            await _dbSet.AddAsync(entity);
-            return entity;
+            return await _dbSet.FindAsync(id);
         }
 
-        public virtual Task UpdateAsync(T entity)
+        public async Task UpdateAsync(T entity)
         {
-            _context.Entry(entity).State = EntityState.Modified;
-            return Task.CompletedTask;
+            _dbSet.Update(entity);
+            await _context.SaveChangesAsync();
         }
 
-        public virtual Task DeleteAsync(T entity)
+        public async Task DeleteAsync(T entity)
         {
             _dbSet.Remove(entity);
-            return Task.CompletedTask;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> ExistsAsync(int id)
+        {
+            return await _dbSet.FindAsync(id) != null;
         }
     }
 }

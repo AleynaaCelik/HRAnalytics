@@ -13,6 +13,6 @@ namespace HRAnalytics.Core.Interfaces
         Task<T?> GetByIdAsync(int id);
         Task UpdateAsync(T entity);
         Task DeleteAsync(T entity);
-        Task<bool> ExistsAsync(int id);
+        Task<bool> ExistsAsync(int id);  // Bu metodun burada tanımlandığından emin ol
     }
 }
