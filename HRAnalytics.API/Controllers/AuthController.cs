@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using HRAnalytics.API.Models.Requests;
+using HRAnalytics.API.Response;
 
 namespace HRAnalytics.API.Controllers
 {
@@ -28,34 +29,28 @@ namespace HRAnalytics.API.Controllers
             _userRepository = userRepository;
             _unitOfWork = unitOfWork;
         }
-
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] AuthLoginRequest request)
+        public async Task<ActionResult<ApiResponse<AuthResponse>>> Login([FromBody] AuthLoginRequest request)
         {
-            var users = await _userRepository.GetAllAsync();
-            var user = users.FirstOrDefault(u => u.Username == request.Username);
-
+            var user = await _userRepository.GetUserByUsernameAsync(request.Username);
             if (user == null || !_authService.VerifyPassword(request.Password, user.PasswordHash))
             {
-                return Unauthorized(new { message = "Kullanıcı adı veya şifre hatalı" });
+                return Unauthorized(ApiResponse<AuthResponse>.FailureResult("Invalid credentials"));
             }
 
             var token = _authService.GenerateJwtToken(user);
             var refreshToken = _authService.GenerateRefreshToken();
 
-            user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
-
-            await _unitOfWork.SaveChangesAsync();
-
-            return Ok(new
+            var response = new AuthResponse
             {
                 AccessToken = token,
                 RefreshToken = refreshToken,
                 Username = user.Username,
                 Email = user.Email,
                 Roles = user.Roles
-            });
+            };
+
+            return Ok(ApiResponse<AuthResponse>.SuccessResult(response, "Login successful"));
         }
 
         [HttpPost("refresh-token")]
@@ -113,12 +108,11 @@ namespace HRAnalytics.API.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] AuthRegisterRequest request)
+        public async Task<ActionResult<ApiResponse<AuthResponse>>> Register([FromBody] AuthRegisterRequest request)
         {
-            var users = await _userRepository.GetAllAsync();
-            if (users.Any(u => u.Username == request.Username || u.Email == request.Email))
+            if (await _userRepository.UsernameExistsAsync(request.Username))
             {
-                return BadRequest("Kullanıcı adı veya email zaten kullanımda");
+                return BadRequest(ApiResponse<AuthResponse>.FailureResult("Username already exists"));
             }
 
             var user = new User
@@ -132,7 +126,14 @@ namespace HRAnalytics.API.Controllers
             await _userRepository.AddAsync(user);
             await _unitOfWork.SaveChangesAsync();
 
-            return Ok(new { message = "Kullanıcı başarıyla oluşturuldu" });
+            var response = new AuthResponse
+            {
+                Username = user.Username,
+                Email = user.Email,
+                Roles = user.Roles
+            };
+
+            return Ok(ApiResponse<AuthResponse>.SuccessResult(response, "Registration successful"));
         }
     }
 
