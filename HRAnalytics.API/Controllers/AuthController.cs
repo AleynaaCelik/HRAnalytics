@@ -1,5 +1,4 @@
-﻿using HRAnalytics.API.Models.Requests;
-using HRAnalytics.Application.Service;
+﻿using HRAnalytics.Application.Service;
 using HRAnalytics.Core.Entities;
 using HRAnalytics.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -7,8 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using HRAnalytics.API.Models.Requests;
 using HRAnalytics.API.Response;
+using HRAnalytics.API.Models.Requests.Auth;
 
 namespace HRAnalytics.API.Controllers
 {

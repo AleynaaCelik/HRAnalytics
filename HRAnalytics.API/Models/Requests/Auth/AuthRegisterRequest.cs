@@ -1,4 +1,4 @@
-﻿namespace HRAnalytics.API.Models.Requests
+﻿namespace HRAnalytics.API.Models.Requests.Auth
 {
     public class AuthRegisterRequest
     {

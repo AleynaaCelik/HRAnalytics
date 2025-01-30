@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using HRAnalytics.API.Models.Requests;
+using HRAnalytics.API.Models.Requests.Auth;
 
 namespace HRAnalytics.API.Validators
 {
