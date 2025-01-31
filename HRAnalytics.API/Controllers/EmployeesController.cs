@@ -37,6 +37,7 @@ namespace HRAnalytics.API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "AllEmployees")]
         public async Task<ActionResult<ApiResponse<IEnumerable<EmployeeResponse>>>> GetAll()
         {
             var employees = await _employeeRepository.GetAllAsync();
@@ -45,6 +46,7 @@ namespace HRAnalytics.API.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Policy = "AllEmployees")]
         public async Task<ActionResult<ApiResponse<EmployeeResponse>>> GetById(int id)
         {
             var employee = await _employeeRepository.GetByIdAsync(id);
@@ -56,7 +58,7 @@ namespace HRAnalytics.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Manager")]
+        [Authorize(Policy = "RequireManagerRole")]
         public async Task<ActionResult<ApiResponse<EmployeeResponse>>> Create([FromBody] CreateEmployeeRequest request)
         {
             var employee = _mapper.Map<Employee>(request);
@@ -69,7 +71,7 @@ namespace HRAnalytics.API.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Manager")]
+        [Authorize(Policy = "RequireManagerRole")]
         public async Task<ActionResult<ApiResponse<EmployeeResponse>>> Update(int id, [FromBody] UpdateEmployeeRequest request)
         {
             var employee = await _employeeRepository.GetByIdAsync(id);
@@ -84,7 +86,7 @@ namespace HRAnalytics.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "RequireAdminRole")]
         public async Task<ActionResult<ApiResponse<bool>>> Delete(int id)
         {
             var employee = await _employeeRepository.GetByIdAsync(id);

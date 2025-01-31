@@ -4,6 +4,7 @@ using HRAnalytics.API.Middleware;
 using HRAnalytics.API.Validators;
 using HRAnalytics.Application.Extensions;
 using HRAnalytics.Application.Settings;
+using HRAnalytics.Core.Constants;
 using HRAnalytics.Core.Entities;
 using HRAnalytics.Core.Interfaces;
 using HRAnalytics.Infrastructure.Extension;
@@ -26,6 +27,17 @@ Log.Logger = new LoggerConfiguration()
    .CreateLogger();
 
 builder.Host.UseSerilog();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole(Roles.Admin));
+
+    options.AddPolicy("RequireManagerRole", policy =>
+        policy.RequireRole(Roles.Admin, Roles.Manager));
+
+    options.AddPolicy("AllEmployees", policy =>
+        policy.RequireRole(Roles.Admin, Roles.Manager, Roles.Employee));
+});
 
 // Add services
 builder.Services.AddControllers();
