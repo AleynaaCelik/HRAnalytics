@@ -13,30 +13,29 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Reflection;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
-   .MinimumLevel.Information()
-   .WriteTo.Console()
-   .WriteTo.File("logs/hranalytics-.txt",
-       rollingInterval: RollingInterval.Day,
-       outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
-   .CreateLogger();
+  .MinimumLevel.Information()
+  .WriteTo.Console()
+  .WriteTo.File("logs/hranalytics-.txt",
+      rollingInterval: RollingInterval.Day,
+      outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+  .CreateLogger();
 
 builder.Host.UseSerilog();
 
+// Authorization Policies
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("RequireAdminRole", policy => policy.RequireRole(Roles.Admin));
-
-    options.AddPolicy("RequireManagerRole", policy =>
-        policy.RequireRole(Roles.Admin, Roles.Manager));
-
-    options.AddPolicy("AllEmployees", policy =>
-        policy.RequireRole(Roles.Admin, Roles.Manager, Roles.Employee));
+    options.AddPolicy("RequireManagerRole", policy => policy.RequireRole(Roles.Admin, Roles.Manager));
+    options.AddPolicy("AllEmployees", policy => policy.RequireRole(Roles.Admin, Roles.Manager, Roles.Employee));
 });
 
 // Add services
@@ -46,14 +45,10 @@ builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
-
-
-
-
 // FluentValidation
 builder.Services.AddFluentValidationAutoValidation()
-   .AddFluentValidationClientsideAdapters()
-   .AddValidatorsFromAssemblyContaining<AuthLoginRequestValidator>();
+  .AddFluentValidationClientsideAdapters()
+  .AddValidatorsFromAssemblyContaining<AuthLoginRequestValidator>();
 
 // JWT Configuration
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
@@ -78,23 +73,38 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Swagger
+// Swagger Configuration
 builder.Services.AddSwaggerGen(c =>
 {
+    // API Information
     c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "HR Analytics API",
         Version = "v1",
-        Description = "HR Analytics için RESTful API servisleri"
+        Description = "HR Analytics için RESTful API servisleri",
+        Contact = new OpenApiContact
+        {
+            Name = "HR Analytics Team",
+            Email = "support@hranalytics.com"
+        },
+        License = new OpenApiLicense
+        {
+            Name = "HR Analytics License",
+            Url = new Uri("https://example.com/license")
+        }
     });
 
+    // JWT Auth Settings
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token",
         Name = "Authorization",
+        Description = @"JWT Authorization header using the Bearer scheme.
+                     Enter 'Bearer' [space] and then your token in the text input below.
+                     Example: 'Bearer 12345abcdef'",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
+        Scheme = "Bearer",
+        BearerFormat = "JWT"
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -106,14 +116,31 @@ builder.Services.AddSwaggerGen(c =>
                {
                    Type = ReferenceType.SecurityScheme,
                    Id = "Bearer"
-               }
+               },
+               Scheme = "Bearer",
+               Name = "Bearer",
+               In = ParameterLocation.Header
            },
-           Array.Empty<string>()
+           new List<string>()
        }
    });
+
+    // XML Documentation
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
+
+    // Operation ID Configuration
+    c.CustomOperationIds(apiDesc =>
+    {
+        return apiDesc.TryGetMethodInfo(out MethodInfo methodInfo) ? methodInfo.Name : null;
+    });
 });
 
-// CORS
+// CORS Configuration
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
@@ -124,22 +151,33 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Middleware Pipeline - Order is important
+// Middleware Pipeline
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 app.UseSerilogRequestLogging();
 
+// Development specific middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "HR Analytics API V1"));
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "HR Analytics API V1");
+        c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
+        c.DefaultModelsExpandDepth(-1);
+        c.DisplayRequestDuration();
+        c.EnableDeepLinking();
+        c.EnableFilter();
+    });
 }
 
+// Core middleware
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
+// Application startup
 try
 {
     Log.Information("Starting web host");
