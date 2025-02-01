@@ -10,12 +10,12 @@ using HRAnalytics.Core.Interfaces;
 using HRAnalytics.Infrastructure.Extension;
 using HRAnalytics.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
-using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Reflection;
 using System.Text;
 
@@ -32,6 +32,29 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
+// Add services
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+
+// API Versioning
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+});
+
+builder.Services.AddVersionedApiExplorer(setup =>
+{
+    setup.GroupNameFormat = "'v'VVV";
+    setup.SubstituteApiVersionInUrl = true;
+});
+
+// Core Services
+builder.Services.AddApplicationServices();
+builder.Services.AddInfrastructureServices(builder.Configuration);
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
 // Authorization Policies
 builder.Services.AddAuthorization(options =>
 {
@@ -39,13 +62,6 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("RequireManagerRole", policy => policy.RequireRole(Roles.Admin, Roles.Manager));
     options.AddPolicy("AllEmployees", policy => policy.RequireRole(Roles.Admin, Roles.Manager, Roles.Employee));
 });
-
-// Add services
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddApplicationServices();
-builder.Services.AddInfrastructureServices(builder.Configuration);
-builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // FluentValidation
 builder.Services.AddFluentValidationAutoValidation()
@@ -78,23 +94,29 @@ builder.Services.AddAuthentication(options =>
 // Swagger Configuration
 builder.Services.AddSwaggerGen(c =>
 {
-    // API Information
-    c.SwaggerDoc("v1", new OpenApiInfo
+    var provider = builder.Services.BuildServiceProvider()
+        .GetRequiredService<IApiVersionDescriptionProvider>();
+
+    // Add swagger document for each API version
+    foreach (var description in provider.ApiVersionDescriptions)
     {
-        Title = "HR Analytics API",
-        Version = "v1",
-        Description = "HR Analytics için RESTful API servisleri",
-        Contact = new OpenApiContact
+        c.SwaggerDoc(description.GroupName, new OpenApiInfo
         {
-            Name = "HR Analytics Team",
-            Email = "support@hranalytics.com"
-        },
-        License = new OpenApiLicense
-        {
-            Name = "HR Analytics License",
-            Url = new Uri("https://example.com/license")
-        }
-    });
+            Title = $"HR Analytics API {description.ApiVersion}",
+            Version = description.ApiVersion.ToString(),
+            Description = $"HR Analytics API {description.ApiVersion} versiyonu",
+            Contact = new OpenApiContact
+            {
+                Name = "HR Analytics Team",
+                Email = "support@hranalytics.com"
+            },
+            License = new OpenApiLicense
+            {
+                Name = "HR Analytics License",
+                Url = new Uri("https://example.com/license")
+            }
+        });
+    }
 
     // JWT Auth Settings
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -134,12 +156,6 @@ builder.Services.AddSwaggerGen(c =>
     {
         c.IncludeXmlComments(xmlPath);
     }
-
-    // Operation ID Configuration
-    c.CustomOperationIds(apiDesc =>
-    {
-        return apiDesc.TryGetMethodInfo(out MethodInfo methodInfo) ? methodInfo.Name : null;
-    });
 });
 
 // CORS Configuration
@@ -151,38 +167,26 @@ builder.Services.AddCors(options =>
                .AllowAnyHeader());
 });
 
-// API Versioning
-builder.Services.AddApiVersioning(options =>
-{
-    options.DefaultApiVersion = new ApiVersion(1, 0);
-    options.AssumeDefaultVersionWhenUnspecified = true;
-    options.ReportApiVersions = true;
-    options.ApiVersionReader = ApiVersionReader.Combine(
-        new UrlSegmentApiVersionReader(),
-        new HeaderApiVersionReader("X-Version"),
-        new QueryStringApiVersionReader("api-version")
-    );
-});
-
-builder.Services.AddVersionedApiExplorer(options =>
-{
-    options.GroupNameFormat = "'v'VVV";
-    options.SubstituteApiVersionInUrl = true;
-});
-
 var app = builder.Build();
 
 // Middleware Pipeline
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 app.UseSerilogRequestLogging();
 
-// Development specific middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "HR Analytics API V1");
+        var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+
+        foreach (var description in provider.ApiVersionDescriptions)
+        {
+            c.SwaggerEndpoint(
+                $"/swagger/{description.GroupName}/swagger.json",
+                $"HR Analytics API {description.GroupName}");
+        }
+
         c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
         c.DefaultModelsExpandDepth(-1);
         c.DisplayRequestDuration();
@@ -191,14 +195,12 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// Core middleware
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Application startup
 try
 {
     Log.Information("Starting web host");
