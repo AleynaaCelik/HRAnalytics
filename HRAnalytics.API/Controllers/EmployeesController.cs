@@ -3,6 +3,7 @@ using HRAnalytics.API.Models.Requests.Employee;
 using HRAnalytics.API.Response;
 using HRAnalytics.Application.DTOs.Employee;
 using HRAnalytics.Application.DTOs.Progress;
+using HRAnalytics.Application.Employee;
 using HRAnalytics.Core.Entities;
 using HRAnalytics.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
