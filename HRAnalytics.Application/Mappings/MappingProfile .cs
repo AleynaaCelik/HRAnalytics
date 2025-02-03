@@ -1,6 +1,4 @@
 ﻿using AutoMapper;
-using HRAnalytics.API.Models.Requests.Employee;
-using HRAnalytics.API.Response;
 using HRAnalytics.Application.DTOs;
 using HRAnalytics.Application.DTOs.Employee.Reguests;
 using HRAnalytics.Application.DTOs.Employee.Responses;
