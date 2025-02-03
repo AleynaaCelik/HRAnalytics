@@ -9,10 +9,10 @@ namespace HRAnalytics.Application.DTOs.Employee
 
     public class CreateEmployeeDto
     {
-        public string FirstName { get; set; } = default!;
-        public string LastName { get; set; } = default!;
-        public string Email { get; set; } = default!;
-        public string? PhoneNumber { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string Email { get; set; }
+        public string PhoneNumber { get; set; }
         public DateTime HireDate { get; set; }
         public int DepartmentId { get; set; }
     }

@@ -10,7 +10,9 @@ namespace HRAnalytics.Core.Interfaces
   
     public interface IEmployeeRepository : IRepository<Employee>
     {
-        Task<IEnumerable<Employee>> GetEmployeesByDepartmentAsync(int departmentId);
+        Task<IEnumerable<Employee>> GetAllWithDetailsAsync();
+        Task<Employee?> GetByIdWithDetailsAsync(int id);
         Task<Employee?> GetEmployeeWithProgressAsync(int employeeId);
+
     }
 }

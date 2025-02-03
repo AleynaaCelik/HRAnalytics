@@ -9,9 +9,8 @@ namespace HRAnalytics.Application.DTOs.Progress
     public class ModuleProgressDto
     {
         public int ModuleId { get; set; }
-        public string ModuleName { get; set; } = default!;
+        public string ModuleName { get; set; }
         public decimal CompletionPercentage { get; set; }
-        public string Status { get; set; } = default!;
         public DateTime? CompletionDate { get; set; }
     }
 }
