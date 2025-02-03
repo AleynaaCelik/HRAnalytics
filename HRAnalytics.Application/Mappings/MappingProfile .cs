@@ -2,9 +2,9 @@
 using HRAnalytics.API.Models.Requests.Employee;
 using HRAnalytics.API.Response;
 using HRAnalytics.Application.DTOs;
-using HRAnalytics.Application.DTOs.Employee;
+using HRAnalytics.Application.DTOs.Employee.Reguests;
+using HRAnalytics.Application.DTOs.Employee.Responses;
 using HRAnalytics.Application.DTOs.Progress;
-using HRAnalytics.Application.Employee;
 using HRAnalytics.Core.Entities;
 using System;
 using System.Collections.Generic;
@@ -14,32 +14,30 @@ using System.Threading.Tasks;
 
 namespace HRAnalytics.Application.Mappings
 {
-   
-        public class MappingProfile : Profile
+
+    public class MappingProfile : Profile
         {
-            public MappingProfile()
-            {
-                // Domain'den DTO'ya mapping
-                CreateMap<Core.Entities.Employee, EmployeeResponse>()
-                    .ForMember(dest => dest.DepartmentName,
-                        opt => opt.MapFrom(src => src.Department.Name));
+        public MappingProfile()
+        {
+            // Employee mapping konfigürasyonları
+            CreateMap<Core.Entities.Employee, EmployeeDto>()
+                .ForMember(dest => dest.DepartmentName,
+                    opt => opt.MapFrom(src => src.Department.Name));
 
-                CreateMap<Core.Entities.Employee, EmployeeResponseV2>()
-                    .ForMember(dest => dest.DepartmentName,
-                        opt => opt.MapFrom(src => src.Department.Name))
-                    .ForMember(dest => dest.FullName,
-                        opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}"))
-                    .ForMember(dest => dest.TotalCompletedModules,
-                        opt => opt.MapFrom(src => src.ProgressRecords.Count(p => p.CompletionPercentage == 100)))
-                    .ForMember(dest => dest.OverallProgress,
-                        opt => opt.MapFrom(src => src.ProgressRecords.Any()
-                            ? src.ProgressRecords.Average(p => p.CompletionPercentage)
-                            : 0));
+            CreateMap<CreateEmployeeDto, Core.Entities.Employee>();
+            CreateMap<UpdateEmployeeDto, Core.Entities.Employee>();
 
-                // DTO'dan Domain'e mapping
-                CreateMap<CreateEmployeeRequest, Core.Entities.Employee>();
-                CreateMap<UpdateEmployeeRequest, Core.Entities.Employee>();
-            }
+            // Employee V2 mapping konfigürasyonları
+            CreateMap<Core.Entities.Employee, EmployeeResponseV2>()
+                .IncludeBase<Core.Entities.Employee, EmployeeDto>()
+                .ForMember(dest => dest.TotalCompletedModules,
+                    opt => opt.MapFrom(src => src.ProgressRecords.Count(p => p.CompletionPercentage == 100)))
+                .ForMember(dest => dest.OverallProgress,
+                    opt => opt.MapFrom(src => src.ProgressRecords.Any()
+                        ? src.ProgressRecords.Average(p => p.CompletionPercentage)
+                        : 0));
         }
     }
+}
+
 

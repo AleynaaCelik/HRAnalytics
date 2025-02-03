@@ -1,4 +1,4 @@
-﻿namespace HRAnalytics.API.Response
+﻿namespace HRAnalytics.Application.DTOs.Employee.Responses
 {
     public class EmployeeResponse
     {

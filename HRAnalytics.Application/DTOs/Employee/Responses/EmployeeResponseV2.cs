@@ -1,12 +1,11 @@
-﻿using HRAnalytics.API.Response;
-using HRAnalytics.Application.DTOs.Progress;
+﻿using HRAnalytics.Application.DTOs.Progress;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HRAnalytics.Application.Employee
+namespace HRAnalytics.Application.DTOs.Employee.Responses
 {
     public class EmployeeResponseV2 : EmployeeResponse
     {

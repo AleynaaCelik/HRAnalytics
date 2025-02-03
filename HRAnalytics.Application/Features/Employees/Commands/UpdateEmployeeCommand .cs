@@ -1,4 +1,4 @@
-﻿using HRAnalytics.Application.DTOs.Employee;
+﻿using HRAnalytics.Application.DTOs.Employee.Reguests;
 using MediatR;
 using System;
 using System.Collections.Generic;

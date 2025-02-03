@@ -1,4 +1,4 @@
-﻿namespace HRAnalytics.API.Models.Requests.Employee
+﻿namespace HRAnalytics.Application.DTOs.Employee.Reguests
 {
     public class UpdateEmployeeRequest
     {

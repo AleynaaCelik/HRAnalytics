@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HRAnalytics.Application.DTOs.Employee
+namespace HRAnalytics.Application.DTOs.Employee.Reguests
 {
 
     public class CreateEmployeeDto

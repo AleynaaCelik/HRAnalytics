@@ -10,41 +10,31 @@ using System.Threading.Tasks;
 
 namespace HRAnalytics.Application.Common
 {
-    public abstract class BaseHandler
-    {
-        protected readonly IUnitOfWork _unitOfWork;
-        protected readonly IMapper _mapper;
-
-        protected BaseHandler(IUnitOfWork unitOfWork, IMapper mapper)
+   
+        public abstract class BaseHandler
         {
-            _unitOfWork = unitOfWork;
-            _mapper = mapper;
-        }
+            protected readonly IUnitOfWork _unitOfWork;
+            protected readonly IMapper _mapper;
 
-        protected async Task<T> GetEntityByIdAsync<T>(int id) where T : BaseEntity
-        {
-            var entity = await _unitOfWork.Repository<T>().GetByIdAsync(id);
-            if (entity == null)
+            protected BaseHandler(IUnitOfWork unitOfWork, IMapper mapper)
             {
-                throw new NotFoundException(typeof(T).Name, id);
+                _unitOfWork = unitOfWork;
+                _mapper = mapper;
             }
-            return entity;
-        }
 
-        protected async Task SaveChangesAsync()
-        {
-            try
+            protected async Task<T> GetEntityByIdAsync<T>(int id) where T : BaseEntity
+            {
+                var entity = await _unitOfWork.Repository<T>().GetByIdAsync(id);
+                if (entity == null)
+                {
+                    throw new NotFoundException(typeof(T).Name, id);
+                }
+                return entity;
+            }
+
+            protected async Task SaveChangesAsync()
             {
                 await _unitOfWork.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                throw new ApplicationException($"Veri güncelleme hatası: {ex.Message}");
-            }
-            catch (DbUpdateException ex)
-            {
-                throw new ApplicationException($"Veritabanı güncelleme hatası: {ex.Message}");
-            }
         }
     }
-}

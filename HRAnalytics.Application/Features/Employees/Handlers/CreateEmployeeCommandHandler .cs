@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using HRAnalytics.Application.Common;
-using HRAnalytics.Application.DTOs.Employee;
+using HRAnalytics.Application.DTOs.Employee.Reguests;
 using HRAnalytics.Application.Features.Employees.Commands;
 using HRAnalytics.Core.Entities;
 using HRAnalytics.Core.Interfaces;
