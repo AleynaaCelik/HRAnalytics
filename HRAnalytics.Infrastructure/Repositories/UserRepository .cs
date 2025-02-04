@@ -10,14 +10,15 @@ using System.Threading.Tasks;
 
 namespace HRAnalytics.Infrastructure.Repositories
 {
-    public class UserRepository : IUserRepository
+    public class UserRepository : GenericRepository<User>, IUserRepository
     {
         private readonly ApplicationDbContext _context;
 
-        public UserRepository(ApplicationDbContext context)
+        public UserRepository(ApplicationDbContext context) : base(context)
         {
             _context = context;
         }
+
 
         public async Task<User> AddAsync(User entity)
         {
@@ -60,7 +61,24 @@ namespace HRAnalytics.Infrastructure.Repositories
 
         public async Task<bool> UsernameExistsAsync(string username)
         {
-            return await _context.Users.AnyAsync(u => u.Username == username);
+            return await _context.Users
+             .AnyAsync(u => u.Username == username && !u.IsDeleted);
+        }
+
+        public async Task<User> GetByUsernameAsync(string username)
+        {
+            return await _context.Users
+           .FirstOrDefaultAsync(u => u.Username == username && !u.IsDeleted);
+        }
+
+        public Task<bool> IsUsernameUniqueAsync(string username)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> IsEmailUniqueAsync(string email)
+        {
+            throw new NotImplementedException();
         }
     }
 }
