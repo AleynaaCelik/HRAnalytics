@@ -9,8 +9,9 @@ namespace HRAnalytics.Core.Interfaces
 {
     public interface IUserRepository : IRepository<User>
     {
-        Task<User?> GetUserByUsernameAsync(string username);
-        Task<bool> UsernameExistsAsync(string username);
+        Task<User> GetByUsernameAsync(string username);
+        Task<bool> IsUsernameUniqueAsync(string username);
+        Task<bool> IsEmailUniqueAsync(string email);
     }
 
 }
