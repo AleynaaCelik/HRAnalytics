@@ -5,14 +5,12 @@ using HRAnalytics.API.Validators;
 using HRAnalytics.Application.Extensions;
 using HRAnalytics.Application.Settings;
 using HRAnalytics.Core.Constants;
-using HRAnalytics.Core.Entities;
 using HRAnalytics.Core.Interfaces;
 using HRAnalytics.Infrastructure.Extension;
 using HRAnalytics.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
@@ -23,102 +21,167 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
-  .MinimumLevel.Information()
-  .WriteTo.Console()
-  .WriteTo.File("logs/hranalytics-.txt",
-      rollingInterval: RollingInterval.Day,
-      outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
-  .CreateLogger();
+    .MinimumLevel.Information()
+    .WriteTo.Console()
+    .WriteTo.File("logs/hranalytics-.txt",
+        rollingInterval: RollingInterval.Day,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .CreateLogger();
 
 builder.Host.UseSerilog();
 
-// Add services
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
+// Add Service Configurations
+ConfigureServices(builder);
 
-// API Versioning
-builder.Services.AddApiVersioning(options =>
+var app = builder.Build();
+
+// Configure Middleware Pipeline
+ConfigureMiddleware(app);
+
+// Application Startup
+StartApplication(app);
+
+void ConfigureServices(WebApplicationBuilder builder)
 {
-    options.DefaultApiVersion = new ApiVersion(1, 0);
-    options.AssumeDefaultVersionWhenUnspecified = true;
-    options.ReportApiVersions = true;
-});
+    // Basic Services
+    builder.Services.AddControllers();
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddResponseCaching();
 
-builder.Services.AddVersionedApiExplorer(setup =>
+    // API Versioning
+    ConfigureApiVersioning(builder.Services);
+
+    // Core Services
+    builder.Services.AddApplicationServices();
+    builder.Services.AddInfrastructureServices(builder.Configuration);
+    builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+    // Authorization
+    ConfigureAuthorization(builder.Services);
+
+    // FluentValidation
+    ConfigureValidation(builder.Services);
+
+    // JWT Authentication
+    ConfigureJwt(builder);
+
+    // Swagger
+    ConfigureSwagger(builder);
+
+    // CORS
+    ConfigureCors(builder.Services);
+}
+
+void ConfigureMiddleware(WebApplication app)
 {
-    setup.GroupNameFormat = "'v'VVV";
-    setup.SubstituteApiVersionInUrl = true;
-});
+    app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+    app.UseSerilogRequestLogging();
 
-// Core Services
-builder.Services.AddApplicationServices();
-builder.Services.AddInfrastructureServices(builder.Configuration);
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-
-// Authorization Policies
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole(Roles.Admin));
-    options.AddPolicy("RequireManagerRole", policy => policy.RequireRole(Roles.Admin, Roles.Manager));
-    options.AddPolicy("AllEmployees", policy => policy.RequireRole(Roles.Admin, Roles.Manager, Roles.Employee));
-});
-
-// FluentValidation
-builder.Services.AddFluentValidationAutoValidation()
-  .AddFluentValidationClientsideAdapters()
-  .AddValidatorsFromAssemblyContaining<AuthLoginRequestValidator>();
-
-// JWT Configuration
-var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+    if (app.Environment.IsDevelopment())
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings.Issuer,
-        ValidAudience = jwtSettings.Audience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
-    };
-});
-
-// Swagger Configuration
-builder.Services.AddSwaggerGen(c =>
-{
-    var provider = builder.Services.BuildServiceProvider()
-        .GetRequiredService<IApiVersionDescriptionProvider>();
-
-    // Add swagger document for each API version
-    foreach (var description in provider.ApiVersionDescriptions)
-    {
-        c.SwaggerDoc(description.GroupName, new OpenApiInfo
-        {
-            Title = $"HR Analytics API {description.ApiVersion}",
-            Version = description.ApiVersion.ToString(),
-            Description = $"HR Analytics API {description.ApiVersion} versiyonu",
-            Contact = new OpenApiContact
-            {
-                Name = "HR Analytics Team",
-                Email = "support@hranalytics.com"
-            },
-            License = new OpenApiLicense
-            {
-                Name = "HR Analytics License",
-                Url = new Uri("https://example.com/license")
-            }
-        });
+        ConfigureSwaggerUI(app);
     }
 
-    // JWT Auth Settings
+    app.UseHttpsRedirection();
+    app.UseResponseCaching();
+    app.UseCors("AllowAll");
+    app.UseAuthentication();
+    app.UseAuthorization();
+    app.MapControllers();
+}
+
+void ConfigureApiVersioning(IServiceCollection services)
+{
+    services.AddApiVersioning(options =>
+    {
+        options.DefaultApiVersion = new ApiVersion(1, 0);
+        options.AssumeDefaultVersionWhenUnspecified = true;
+        options.ReportApiVersions = true;
+    });
+
+    services.AddVersionedApiExplorer(setup =>
+    {
+        setup.GroupNameFormat = "'v'VVV";
+        setup.SubstituteApiVersionInUrl = true;
+    });
+}
+
+void ConfigureAuthorization(IServiceCollection services)
+{
+    services.AddAuthorization(options =>
+    {
+        options.AddPolicy("RequireAdminRole", policy => policy.RequireRole(Roles.Admin));
+        options.AddPolicy("RequireManagerRole", policy => policy.RequireRole(Roles.Admin, Roles.Manager));
+        options.AddPolicy("AllEmployees", policy => policy.RequireRole(Roles.Admin, Roles.Manager, Roles.Employee));
+    });
+}
+
+void ConfigureValidation(IServiceCollection services)
+{
+    services.AddFluentValidationAutoValidation()
+        .AddFluentValidationClientsideAdapters()
+        .AddValidatorsFromAssemblyContaining<AuthLoginRequestValidator>();
+}
+
+void ConfigureJwt(WebApplicationBuilder builder)
+{
+    var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
+    builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+
+    builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings.Issuer,
+            ValidAudience = jwtSettings.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
+        };
+    });
+}
+
+void ConfigureSwagger(WebApplicationBuilder builder)
+{
+    builder.Services.AddSwaggerGen(c =>
+    {
+        var provider = builder.Services.BuildServiceProvider()
+            .GetRequiredService<IApiVersionDescriptionProvider>();
+
+        foreach (var description in provider.ApiVersionDescriptions)
+        {
+            c.SwaggerDoc(description.GroupName, new OpenApiInfo
+            {
+                Title = $"HR Analytics API {description.ApiVersion}",
+                Version = description.ApiVersion.ToString(),
+                Description = $"HR Analytics API {description.ApiVersion} versiyonu",
+                Contact = new OpenApiContact
+                {
+                    Name = "HR Analytics Team",
+                    Email = "support@hranalytics.com"
+                },
+                License = new OpenApiLicense
+                {
+                    Name = "HR Analytics License",
+                    Url = new Uri("https://example.com/license")
+                }
+            });
+        }
+
+        ConfigureSwaggerAuth(c);
+        ConfigureSwaggerXml(c);
+    });
+}
+
+void ConfigureSwaggerAuth(Swashbuckle.AspNetCore.SwaggerGen.SwaggerGenOptions c)
+{
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -132,48 +195,46 @@ builder.Services.AddSwaggerGen(c =>
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
-   {
-       {
-           new OpenApiSecurityScheme
-           {
-               Reference = new OpenApiReference
-               {
-                   Type = ReferenceType.SecurityScheme,
-                   Id = "Bearer"
-               },
-               Scheme = "Bearer",
-               Name = "Bearer",
-               In = ParameterLocation.Header
-           },
-           new List<string>()
-       }
-   });
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                },
+                Scheme = "Bearer",
+                Name = "Bearer",
+                In = ParameterLocation.Header
+            },
+            new List<string>()
+        }
+    });
+}
 
-    // XML Documentation
+void ConfigureSwaggerXml(Swashbuckle.AspNetCore.SwaggerGen.SwaggerGenOptions c)
+{
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     if (File.Exists(xmlPath))
     {
         c.IncludeXmlComments(xmlPath);
     }
-});
+}
 
-// CORS Configuration
-builder.Services.AddCors(options =>
+void ConfigureCors(IServiceCollection services)
 {
-    options.AddPolicy("AllowAll", builder =>
-        builder.AllowAnyOrigin()
-               .AllowAnyMethod()
-               .AllowAnyHeader());
-});
+    services.AddCors(options =>
+    {
+        options.AddPolicy("AllowAll", builder =>
+            builder.AllowAnyOrigin()
+                   .AllowAnyMethod()
+                   .AllowAnyHeader());
+    });
+}
 
-var app = builder.Build();
-
-// Middleware Pipeline
-app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
-app.UseSerilogRequestLogging();
-
-if (app.Environment.IsDevelopment())
+void ConfigureSwaggerUI(WebApplication app)
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
@@ -195,22 +256,19 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
-app.UseCors("AllowAll");
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapControllers();
-
-try
+void StartApplication(WebApplication app)
 {
-    Log.Information("Starting web host");
-    app.Run();
-}
-catch (Exception ex)
-{
-    Log.Fatal(ex, "Host terminated unexpectedly");
-}
-finally
-{
-    Log.CloseAndFlush();
+    try
+    {
+        Log.Information("Starting web host");
+        app.Run();
+    }
+    catch (Exception ex)
+    {
+        Log.Fatal(ex, "Host terminated unexpectedly");
+    }
+    finally
+    {
+        Log.CloseAndFlush();
+    }
 }
