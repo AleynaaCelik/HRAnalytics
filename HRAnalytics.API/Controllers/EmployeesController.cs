@@ -38,6 +38,8 @@ namespace HRAnalytics.API.Controllers
         [HttpGet]
         [MapToApiVersion("1.0")]
         [Authorize(Policy = "AllEmployees")]
+        [ResponseCache(Duration = 60)] // 60 saniye cache
+
         public async Task<ActionResult<ApiResponse<IEnumerable<EmployeeResponse>>>> GetAllV1()
         {
             var employees = await _employeeRepository.GetAllAsync();
@@ -48,6 +50,7 @@ namespace HRAnalytics.API.Controllers
         [HttpGet]
         [MapToApiVersion("2.0")]
         [Authorize(Policy = "AllEmployees")]
+        [ResponseCache(Duration = 60, VaryByQueryKeys = new[] { "id" })]
         public async Task<ActionResult<ApiResponse<IEnumerable<EmployeeResponseV2>>>> GetAllV2()
         {
             var employees = await _employeeRepository.GetAllWithDetailsAsync();
