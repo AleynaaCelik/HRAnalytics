@@ -13,6 +13,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{AD992B84-C04
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HRAnalytics.API", "HRAnalytics.API\HRAnalytics.API.csproj", "{ADB703FD-C469-42F4-9AB1-F8702FC21FF6}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{A6895FF3-70FF-44B9-BCC3-87CEAE9259B9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HRAnalytics.Tests", "tests\HRAnalytics.Tests\HRAnalytics.Tests.csproj", "{819586D6-E1DF-4EF9-A252-3F14C91FB7BF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,8 +39,15 @@ Global
 		{ADB703FD-C469-42F4-9AB1-F8702FC21FF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ADB703FD-C469-42F4-9AB1-F8702FC21FF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ADB703FD-C469-42F4-9AB1-F8702FC21FF6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{819586D6-E1DF-4EF9-A252-3F14C91FB7BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{819586D6-E1DF-4EF9-A252-3F14C91FB7BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{819586D6-E1DF-4EF9-A252-3F14C91FB7BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{819586D6-E1DF-4EF9-A252-3F14C91FB7BF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{819586D6-E1DF-4EF9-A252-3F14C91FB7BF} = {A6895FF3-70FF-44B9-BCC3-87CEAE9259B9}
 	EndGlobalSection
 EndGlobal
