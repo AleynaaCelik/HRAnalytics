@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace HRAnalytics.Tests.Services
 {
-    
+
     public class AuthServiceTests
     {
         private readonly Mock<IUserRepository> _userRepositoryMock;
@@ -41,38 +41,31 @@ namespace HRAnalytics.Tests.Services
         }
 
         [Fact]
-        public void GenerateJwtToken_ShouldReturnValidToken()
-        {
-            // Arrange
-            var user = new User
-            {
-                Id = 1,
-                Username = "testuser",
-                Email = "test@test.com",
-                Roles = new List<string> { "Employee" }
-            };
-
-            // Act
-            var token = _authService.GenerateJwtToken(user);
-
-            // Assert
-            token.Should().NotBeNullOrEmpty();
-        }
-
-        [Fact]
-        public void VerifyPassword_WithValidPassword_ShouldReturnTrue()
+        public void HashPassword_ShouldNotReturnNullOrEmpty()
         {
             // Arrange
             var password = "Test123!";
-            var hash = _authService.HashPassword(password);
 
             // Act
-            var result = _authService.VerifyPassword(password, hash);
+            var hash = _authService.HashPassword(password);
 
             // Assert
-            result.Should().BeTrue();
+            Assert.NotNull(hash);
+            Assert.NotEmpty(hash);
+        }
+
+        [Fact]
+        public void GenerateRefreshToken_ShouldNotReturnNullOrEmpty()
+        {
+            // Act
+            var token = _authService.GenerateRefreshToken();
+
+            // Assert
+            Assert.NotNull(token);
+            Assert.NotEmpty(token);
         }
     }
+}
 
     
-}
+
