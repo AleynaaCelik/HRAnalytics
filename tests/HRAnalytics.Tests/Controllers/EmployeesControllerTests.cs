@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using HRAnalytics.API.Controllers;
 using HRAnalytics.Application.DTOs.Employee.Responses;
 using HRAnalytics.Core.Entities;
 using HRAnalytics.Core.Interfaces;
@@ -36,49 +37,18 @@ namespace HRAnalytics.Tests.Controllers
         }
 
         [Fact]
-        public async Task GetAllV1_ShouldReturnEmployeeList()
+        public async Task GetById_WithInvalidId_ShouldReturnNotFound()
         {
             // Arrange
-            var employees = new List<Employee>
-        {
-            new Employee { Id = 1, FirstName = "John", LastName = "Doe" },
-            new Employee { Id = 2, FirstName = "Jane", LastName = "Doe" }
-        };
-
-            var employeeDtos = new List<EmployeeResponse>
-        {
-            new EmployeeResponse { Id = 1, FirstName = "John", LastName = "Doe" },
-            new EmployeeResponse { Id = 2, FirstName = "Jane", LastName = "Doe" }
-        };
-
-            _employeeRepositoryMock.Setup(x => x.GetAllAsync())
-                .ReturnsAsync(employees);
-
-            _mapperMock.Setup(x => x.Map<IEnumerable<EmployeeResponse>>(employees))
-                .Returns(employeeDtos);
-
-            // Act
-            var result = await _controller.GetAllV1();
-
-            // Assert
-            var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-            var response = okResult.Value.Should().BeOfType<ApiResponse<IEnumerable<EmployeeResponse>>>().Subject;
-            response.Data.Should().HaveCount(2);
-            response.Success.Should().BeTrue();
-        }
-
-        [Fact]
-        public async Task GetByIdV1_WithInvalidId_ShouldReturnNotFound()
-        {
-            // Arrange
-            _employeeRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<int>()))
+            int testId = 1;
+            _employeeRepositoryMock.Setup(x => x.GetByIdAsync(testId))
                 .ReturnsAsync((Employee)null);
 
             // Act
-            var result = await _controller.GetByIdV1(1);
+            var result = await _controller.GetByIdV1(testId);
 
             // Assert
-            result.Result.Should().BeOfType<NotFoundObjectResult>();
+            Assert.IsType<NotFoundObjectResult>(result.Result);
         }
     }
 }

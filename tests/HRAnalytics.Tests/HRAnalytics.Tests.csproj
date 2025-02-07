@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\HRAnalytics.API\HRAnalytics.API.csproj" />
     <ProjectReference Include="..\..\HRAnalytics.Application\HRAnalytics.Application.csproj" />
     <ProjectReference Include="..\..\HRAnalytics.Core\HRAnalytics.Core.csproj" />
   </ItemGroup>
