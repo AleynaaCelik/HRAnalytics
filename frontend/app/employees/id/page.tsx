@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/axios';
 import { IEmployeeDetail } from '@/types/employees';
+import ProgressModal from '@/components/employees/ProgressModal';
+import { IProgressUpdate } from '@/types/progress';
 
 export default function EmployeeDetailPage({ params }: { params: { id: string } }) {
   const [employee, setEmployee] = useState<IEmployeeDetail | null>(null);
