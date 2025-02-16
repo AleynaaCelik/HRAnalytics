@@ -1,4 +1,3 @@
-// app/employees/[id]/page.tsx
 'use client';
 
 import MainLayout from '@/components/layout/MainLayout';
@@ -10,6 +9,8 @@ import { IEmployeeDetail } from '@/types/employees';
 export default function EmployeeDetailPage({ params }: { params: { id: string } }) {
   const [employee, setEmployee] = useState<IEmployeeDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
+  const [selectedProgress, setSelectedProgress] = useState<any>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -25,6 +26,16 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
       console.error('Error fetching employee details:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleProgressUpdate = async (data: IProgressUpdate) => {
+    try {
+      await api.put(`/employees/${params.id}/progress`, data);
+      await fetchEmployeeDetails();
+      setIsProgressModalOpen(false);
+    } catch (error) {
+      console.error('Error updating progress:', error);
     }
   };
 
@@ -124,8 +135,8 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
                     'bg-gray-100 text-gray-800'
                   }`}>
                     {record.status === 'Completed' ? 'Tamamlandı' :
-                     record.status === 'InProgress' ? 'Devam Ediyor' :
-                     'Başlanmadı'}
+                    record.status === 'InProgress' ? 'Devam Ediyor' :
+                    'Başlanmadı'}
                   </span>
                 </div>
                 <div className="w-full h-2 bg-gray-200 rounded-full">
@@ -142,11 +153,30 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
                     </span>
                   )}
                 </div>
+                <button
+                  onClick={() => {
+                    setSelectedProgress(record);
+                    setIsProgressModalOpen(true);
+                  }}
+                  className="mt-2 text-sm text-blue-600 hover:text-blue-800"
+                >
+                  İlerlemeyi Güncelle
+                </button>
               </div>
             ))}
           </div>
         </div>
       </div>
+
+      {/* Progress Update Modal */}
+      {selectedProgress && (
+        <ProgressModal
+          isOpen={isProgressModalOpen}
+          onClose={() => setIsProgressModalOpen(false)}
+          onSubmit={handleProgressUpdate}
+          currentProgress={selectedProgress}
+        />
+      )}
     </MainLayout>
   );
 }

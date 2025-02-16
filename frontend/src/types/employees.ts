@@ -29,3 +29,10 @@ export interface IEmployeeDetail {
   }[];
   totalProgress: number;
 }
+
+export interface IProgressUpdate {
+  moduleId: string;
+  completionPercentage: number;
+  status: 'NotStarted' | 'InProgress' | 'Completed';
+  completionDate?: Date;
+}
