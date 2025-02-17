@@ -14,9 +14,7 @@ using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
-using System.Reflection;
 using System.Text;
-using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,110 +29,173 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// Add Service Configurations
-ConfigureServices(builder);
+// Add services to the container
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddResponseCaching();
+
+// API Versioning
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+});
+
+builder.Services.AddVersionedApiExplorer(setup =>
+{
+    setup.GroupNameFormat = "'v'VVV";
+    setup.SubstituteApiVersionInUrl = true;
+});
+
+// Core Services
+builder.Services.AddApplicationServices();
+builder.Services.AddInfrastructureServices(builder.Configuration);
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+// Authorization
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole(Roles.Admin));
+    options.AddPolicy("RequireManagerRole", policy => policy.RequireRole(Roles.Admin, Roles.Manager));
+    options.AddPolicy("AllEmployees", policy => policy.RequireRole(Roles.Admin, Roles.Manager, Roles.Employee));
+});
+
+// FluentValidation
+builder.Services.AddFluentValidationAutoValidation()
+    .AddFluentValidationClientsideAdapters()
+    .AddValidatorsFromAssemblyContaining<AuthLoginRequestValidator>();
+
+// JWT Authentication
+var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings.Issuer,
+        ValidAudience = jwtSettings.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
+    };
+});
+
+// Swagger
+builder.Services.AddSwaggerGen(c =>
+{
+    var provider = builder.Services.BuildServiceProvider()
+        .GetRequiredService<IApiVersionDescriptionProvider>();
+
+    foreach (var description in provider.ApiVersionDescriptions)
+    {
+        c.SwaggerDoc(description.GroupName, new OpenApiInfo
+        {
+            Title = $"HR Analytics API {description.ApiVersion}",
+            Version = description.ApiVersion.ToString(),
+            Description = $"HR Analytics API {description.ApiVersion} versiyonu"
+        });
+    }
+
+    // JWT Authentication için Swagger yapýlandýrmasý
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Description = "JWT Bearer token",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader());
+});
+
+// SPA Services
+builder.Services.AddSpaStaticFiles(configuration =>
+{
+    configuration.RootPath = "ClientApp/dist";
+});
 
 var app = builder.Build();
 
-// Configure Middleware Pipeline
-ConfigureMiddleware(app);
+// Configure the HTTP request pipeline
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+app.UseSerilogRequestLogging();
 
-// Application Startup
-StartApplication(app);
-
-void ConfigureServices(WebApplicationBuilder builder)
+if (app.Environment.IsDevelopment())
 {
-    // Basic Services
-    builder.Services.AddControllers();
-    builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddResponseCaching();
-
-    // SPA Services
-    builder.Services.AddSpaStaticFiles(configuration =>
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
     {
-        configuration.RootPath = "ClientApp/dist";
-    });
-
-    // API Versioning
-    ConfigureApiVersioning(builder.Services);
-
-    // Core Services
-    builder.Services.AddApplicationServices();
-    builder.Services.AddInfrastructureServices(builder.Configuration);
-    builder.Services.AddScoped<IUserRepository, UserRepository>();
-
-    // Authorization
-    ConfigureAuthorization(builder.Services);
-
-    // FluentValidation
-    ConfigureValidation(builder.Services);
-
-    // JWT Authentication
-    ConfigureJwt(builder);
-
-    // Swagger
-    ConfigureSwagger(builder);
-
-    // CORS
-    ConfigureCors(builder.Services);
-}
-
-void ConfigureMiddleware(WebApplication app)
-{
-    app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
-    app.UseSerilogRequestLogging();
-
-    if (app.Environment.IsDevelopment())
-    {
-        ConfigureSwaggerUI(app);
-    }
-
-    app.UseHttpsRedirection();
-    app.UseStaticFiles();
-    app.UseSpaStaticFiles();
-    app.UseResponseCaching();
-    app.UseCors("AllowAll");
-    app.UseAuthentication();
-    app.UseAuthorization();
-    app.MapControllers();
-
-    app.UseSpa(spa =>
-    {
-        spa.Options.SourcePath = "ClientApp";
-
-        if (app.Environment.IsDevelopment())
+        var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+        foreach (var description in provider.ApiVersionDescriptions)
         {
-            spa.UseProxyToSpaDevelopmentServer("http://localhost:5173");
+            c.SwaggerEndpoint(
+                $"/swagger/{description.GroupName}/swagger.json",
+                $"HR Analytics API {description.GroupName}");
         }
     });
 }
 
-// ... (diðer konfigürasyon metodlarý ayný kalacak)
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseSpaStaticFiles();
+app.UseResponseCaching();
+app.UseCors("AllowAll");
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
 
-void ConfigureCors(IServiceCollection services)
+app.UseSpa(spa =>
 {
-    services.AddCors(options =>
+    spa.Options.SourcePath = "ClientApp";
+
+    if (app.Environment.IsDevelopment())
     {
-        options.AddPolicy("AllowAll", builder =>
-            builder.AllowAnyOrigin()
-                   .AllowAnyMethod()
-                   .AllowAnyHeader());
-    });
+        spa.UseProxyToSpaDevelopmentServer("http://localhost:5173");
+    }
+});
+
+try
+{
+    Log.Information("Starting web host");
+    app.Run();
 }
-
-void StartApplication(WebApplication app)
+catch (Exception ex)
 {
-    try
-    {
-        Log.Information("Starting web host");
-        app.Run();
-    }
-    catch (Exception ex)
-    {
-        Log.Fatal(ex, "Host terminated unexpectedly");
-    }
-    finally
-    {
-        Log.CloseAndFlush();
-    }
+    Log.Fatal(ex, "Host terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
 }
