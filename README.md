@@ -1,88 +1,126 @@
-# HRAnalytics
-HR Analytics - Employee Orientation Tracking System
 
 
-Modern ve etkili bir İK yönetim platformu. Bu sistem, çalışanların oryantasyon süreçlerini takip etmeyi, departman yönetimini ve performans izlemesini kolaylaştırır.
+# HR Analytics - İnsan Kaynakları Oryantasyon Takip Sistemi
 
+## 📋 Proje Özeti  
 
-🚀 Özellikler
+Modern insan kaynakları yönetimini kolaylaştıran, çalışan oryantasyon süreçlerini etkin bir şekilde takip eden web tabanlı bir yönetim sistemi.
 
-Çalışan Yönetimi
+## 🎯 Temel Özellikler  
 
-Detaylı çalışan profilleri
+### 👥 Çalışan Yönetimi  
+- Detaylı çalışan profil yönetimi  
+- Oryantasyon süreç takibi  
+- Gelişim ve performans izleme  
+- Çalışan aktivite geçmişi  
 
+### 🏢 Departman Yönetimi  
+- Departman bazlı organizasyon yapısı  
+- Departman-çalışan ilişkileri  
+- Departman bazlı raporlama  
 
-Oryantasyon süreci takibi
+### 📈 Oryantasyon Süreç Yönetimi  
+- İnteraktif ilerleme takibi  
+- Modül bazlı performans değerlendirme  
+- Gerçek zamanlı raporlama  
+- Otomatik durum güncellemeleri  
 
+## 💻 Kullanılan Teknolojiler  
 
-İlerleme güncellemeleri
+### Backend  
+- **.NET 8**
+  - Entity Framework Core  
+  - JWT Authentication  
+  - Fluent Validation  
+  - AutoMapper  
+  - Serilog  
 
+### Frontend  
+- **Next.js 14**
+  - TypeScript  
+  - TailwindCSS  
+  - Axios  
+  - React Query  
 
-Departman Yönetimi
+### Veritabanı & DevOps  
+- **PostgreSQL**  
+- **Docker**  
+- **Docker Compose**  
 
-Departman bazlı organizasyon
+## 🚀 Kurulum Adımları  
 
+### Ön Gereksinimler  
+- .NET 8 SDK  
+- Node.js  
+- Docker Desktop  
+- PostgreSQL (Docker ile)  
 
-Çalışan-departman ilişkileri
+### Kurulum  
+1. **Repo Klonlama**  
+```bash
+git clone https://github.com/yourusername/hr-analytics.git
+cd hr-analytics
+```
 
+2. **Backend Kurulumu**  
+```bash
+cd HRAnalytics.API
+dotnet restore
+dotnet run
+```
 
-Oryantasyon Takibi
+3. **Frontend Kurulumu**  
+```bash
+cd FRONTEND
+npm install
+npm run dev
+```
 
-Modül bazlı ilerleme
+4. **Docker & Veritabanı**  
+```bash
+docker-compose up -d
+```
 
+## 🔑 Ortam Değişkenleri  
 
-Gerçek zamanlı durum güncellemeleri
+`.env.local` dosyası (Frontend için):  
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000
+```
 
+## 📌 API Endpoint'leri  
 
-Tamamlanma yüzdeleri
+| Metod | Endpoint | Açıklama |
+|-------|----------|-----------|
+| GET | `/api/v1/employees` | Çalışan listesi |
+| GET | `/api/v1/departments` | Departman listesi |
+| POST | `/api/v1/employees/{id}/progress` | İlerleme güncelleme |
 
+## 🤝 Katkıda Bulunma  
 
+1. Projeyi fork'layın  
+2. Yeni bir branch oluşturun (`git checkout -b feature/amazing-feature`)  
+3. Değişikliklerinizi commit'leyin (`git commit -m 'feat: Add amazing feature'`)  
+4. Branch'inizi push'layın (`git push origin feature/amazing-feature`)  
+5. Pull Request oluşturun  
 
-🛠️ Teknolojiler
+## 📄 Lisans  
 
+Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICENSE) dosyasına bakınız.
 
-Backend
+## 👨‍💻 Geliştiriciler  
+- [İsminiz](https://github.com/yourusername)  
 
-.NET 8
+## 📞 İletişim  
+- Email: your.email@example.com  
+- LinkedIn: [LinkedIn Profiliniz](https://linkedin.com/in/yourusername)  
 
+---
 
-Entity Framework Core
+### 🌟 Star Verin!  
+Beğendiyseniz projeye star vermeyi unutmayın!
 
-
-PostgreSQL
-
-
-JWT Authentication
-
-
-Swagger
-
-
-Serilog
-
-
-Frontend
-
-
-Next.js 14
-
-
-Tailwind CSS
-
-
-Axios
-
-
-TypeScript
-
-DevOps
-
-
-
-Docker
-
-
-Docker Compose
+Bu format GitHub'da düzgün görüntülenecektir. Her başlık, liste öğesi ve kod bloğu için gerekli boşlukları ve satır sonlarını içeriyor. Direkt kopyalayıp GitHub'a yapıştırabilirsiniz.
 
 
 
