@@ -104,23 +104,20 @@ NEXT_PUBLIC_API_URL=http://localhost:5000
 4. Branch'inizi push'layın (`git push origin feature/amazing-feature`)  
 5. Pull Request oluşturun  
 
-## 📄 Lisans  
 
-Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICENSE) dosyasına bakınız.
 
 ## 👨‍💻 Geliştiriciler  
-- [İsminiz](https://github.com/yourusername)  
+- [Aleyna ÇELİK ]((https://github.com/AleynaaCelik))  
 
 ## 📞 İletişim  
-- Email: your.email@example.com  
-- LinkedIn: [LinkedIn Profiliniz](https://linkedin.com/in/yourusername)  
+- Email: aleynaa.celik0@gmail.com 
+- LinkedIn: [(https://www.linkedin.com/in/aleyna-%C3%A7elik/)]
 
 ---
 
 ### 🌟 Star Verin!  
 Beğendiyseniz projeye star vermeyi unutmayın!
 
-Bu format GitHub'da düzgün görüntülenecektir. Her başlık, liste öğesi ve kod bloğu için gerekli boşlukları ve satır sonlarını içeriyor. Direkt kopyalayıp GitHub'a yapıştırabilirsiniz.
 
 
 
